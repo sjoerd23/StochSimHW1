@@ -127,9 +127,9 @@ def main():
     plt.imshow(mandelbrot_set, extent=dims)
     plt.savefig("results/mandelbrot_{}_{}.png".format(grid_size, mandel_max_iter), dpi=1000)
 
-    mandelbrot_areas_conv = []
-
+########################################################################################
     # investigate the convergence
+    mandelbrot_areas_conv = []
     for max_iter in range(mandel_max_iter):
 
         print("Evaluating max_iter {} of {} now...".format(max_iter, mandel_max_iter))
