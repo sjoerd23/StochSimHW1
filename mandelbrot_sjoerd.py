@@ -96,14 +96,14 @@ def main():
 
     np.random.seed()
 
-    dims = [-2, 0.6, -1, 1]
+    dims = [-2, 0.6, -1.1, 1.1]
     grid_size = 1000
-    mandel_max_iter = 100
+    mandel_max_iter = 50
     fname = "results/mandelbrot_{}_{}".format(grid_size, mandel_max_iter)
 
     # set to True if you want to calculate a new mandelbrot set
     # set to False if you want to load an existing mandelbrot set from fname
-    calculate_new_mandelbrot = False
+    calculate_new_mandelbrot = True
 
     if calculate_new_mandelbrot == True:
         time_start = time.time()
@@ -118,12 +118,38 @@ def main():
         mandelbrot_set = load_mandelbrot(fname)
 
     # calculate integral of mandelbrot set using Monte Carlo
-    mandelbrot_area = integrate_mandelbrot(mandelbrot_set, dims, grid_size, mandel_max_iter)
+    mandelbrot_area = integrate_mandelbrot(mandelbrot_set, dims, grid_size, mandel_max_iter, mc_max_iter=100000)
     print("The integral of the mandelbrot set is {}".format(mandelbrot_area))
 
+    # plot the mandelbrot set
     fig, ax = plot_layout()
+    plt.title("Mandelbrot set")
     plt.imshow(mandelbrot_set, extent=dims)
     plt.savefig("results/mandelbrot_{}_{}.png".format(grid_size, mandel_max_iter), dpi=1000)
+
+    mandelbrot_areas_conv = []
+
+    # investigate the convergence
+    for max_iter in range(mandel_max_iter):
+
+        print("Evaluating max_iter {} of {} now...".format(max_iter, mandel_max_iter))
+
+        # create mandelbrot set using i
+        mandelbrot_set_conv = mandelbrot(dims, grid_size, max_iter)
+
+        # integrate mandelbrot set using i
+        mandelbrot_areas_conv.append(integrate_mandelbrot(mandelbrot_set_conv, dims, grid_size, max_iter))
+
+    # calculate A_js - Ais
+    area_diffs = [(mandelbrot_area_conv - mandelbrot_area) for mandelbrot_area_conv in mandelbrot_areas_conv]
+    max_iters = [max_iter for max_iter in range(mandel_max_iter)]
+
+    fig2, ax2 = plot_layout()
+    plt.title("Absolute difference in surface over number of iterations")
+    plt.plot(max_iters, area_diffs)
+    plt.xlabel("Iterations")
+    plt.ylabel("Differences in surface")
+    plt.savefig("results/mandelbrot_diffs_iter_{}_{}.png".format(grid_size, mandel_max_iter), dpi=1000)
     plt.show()
     print("Done!")
 
