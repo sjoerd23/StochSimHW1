@@ -55,15 +55,11 @@ def plot_layout():
 
 def load_mandelbrot(fname):
     """Load mandelbrot set """
-    mandelbrot_set = np.loadtxt(fname)
-
-    return mandelbrot_set
+    return np.loadtxt(fname)
 
 def save_mandelbot(fname, mandelbrot_set):
     """Save mandelbrot set """
-    np.savetxt(fname, mandelbrot_set)
-
-    return
+    return np.savetxt(fname, mandelbrot_set)
 
 def integrate_mandelbrot(mandelbrot_set, dims, grid_size, mandel_max_iter, mc_max_iter=10000):
     """Integrate the mandelbrot set using Monte Carlo method """
@@ -71,31 +67,25 @@ def integrate_mandelbrot(mandelbrot_set, dims, grid_size, mandel_max_iter, mc_ma
     hit = 0
     miss = 0
 
-    print(np.amax(mandelbrot_set))
-
     for i in range(mc_max_iter):
+
         # throw a random number on the grid
         x_rand = np.random.randint(grid_size)
         y_rand = np.random.randint(grid_size)
-
         if mandelbrot_set[y_rand][x_rand] == mandel_max_iter - 1:
             hit += 1
         else:
             miss += 1
 
-    print(hit, miss)
     # calculate total surface over which we integrate
     surface = (dims[1] - dims[0]) * (dims[3] - dims[2])
 
-    # calculate are of mandelbrot
-    area = hit / (miss + hit) * (surface)
-
-    return area
+    # return area of mandelbrot set
+    return hit / (miss + hit) * (surface)
 
 def main():
 
     np.random.seed()
-
     dims = [-2, 0.6, -1.1, 1.1]
     grid_size = 1000
     mandel_max_iter = 50
@@ -134,16 +124,17 @@ def main():
 
         print("Evaluating max_iter {} of {} now...".format(max_iter, mandel_max_iter))
 
-        # create mandelbrot set using i
+        # create mandelbrot set using max_iter
         mandelbrot_set_conv = mandelbrot(dims, grid_size, max_iter)
 
-        # integrate mandelbrot set using i
+        # integrate mandelbrot set using max_iter
         mandelbrot_areas_conv.append(integrate_mandelbrot(mandelbrot_set_conv, dims, grid_size, max_iter))
 
-    # calculate A_js - Ais
+    # calculate A_js - A_is
     area_diffs = [(mandelbrot_area_conv - mandelbrot_area) for mandelbrot_area_conv in mandelbrot_areas_conv]
     max_iters = [max_iter for max_iter in range(mandel_max_iter)]
 
+    # plot convergence rate of integral value
     fig2, ax2 = plot_layout()
     plt.title("Absolute difference in surface over number of iterations")
     plt.plot(max_iters, area_diffs)
