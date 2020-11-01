@@ -2,71 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-
-def mandelbrot(dims, grid_size, mandel_max_iter):
-    """Create mandelbrot set
-
-    Args:
-        dims : list [x1, x2, y1, y2]
-            dimensions of the search space
-        grid_size : int
-            length of grid in each direction
-        mandel_max_iter : int
-            maximum number of iterations per candidate number c
-
-    Returns:
-        mandelbrot_set : 2D numpy array
-            matrix of number of iterations before escaping mandelbrot
-    """
-
-    # create grid points to evaluate for mandelbrot set
-    x_grid = np.linspace(dims[0], dims[1], grid_size)
-    y_grid = np.linspace(dims[2], dims[3], grid_size)
-
-    # create matrix to store number of iterations to escape the set
-    # if it doesnt escape: iterations is set to 0
-    mandelbrot_set = np.zeros((grid_size, grid_size))
-
-    # loop over all coordinates
-    for i, x in enumerate(x_grid):
-
-        # print("Progression: {:.2%}".format(i/len(x_grid)))
-        for j, y in enumerate(y_grid):
-
-            # create imaginary number c = a + bi
-            c = complex(x, y)
-
-            # max size of mandelbrot set is 2
-            z = 0
-            k = 0
-            while abs(z) <= 2 and k < mandel_max_iter:
-
-                # mandelbrot formula z_n+1 = (z_n)^2 + c
-                z = z**2 + c
-                k += 1
-
-            # save the number of iterations. 0 denotes mandelbrot set number
-            # if after mandel_max_iter z < 2 --> member of mandelbrot set
-            mandelbrot_set[j][i] = k - 1
-
-    return mandelbrot_set
-
-
-def plot_layout():
-    """Standard plot layout for figures """
-    fig = plt.figure(facecolor='w')
-    ax = fig.add_subplot(111, facecolor='#e8e8e8', axisbelow=True)
-
-    return fig, ax
-
-def load_mandelbrot(fname):
-    """Load mandelbrot set """
-    return np.loadtxt(fname)
-
-def save_mandelbot(fname, mandelbrot_set):
-    """Save mandelbrot set """
-    return np.savetxt(fname, mandelbrot_set)
-
 def integrate_mandelbrot(mandelbrot_set, dims, grid_size, mandel_max_iter, antithetic=False, mc_max_iter=10000):
     """Integrate the mandelbrot set using Monte Carlo method. User can set antithetic to True
     to use antithetic variables
@@ -122,6 +57,69 @@ def integrate_mandelbrot(mandelbrot_set, dims, grid_size, mandel_max_iter, antit
 
     # return area of mandelbrot set
     return hit / (miss + hit) * (surface)
+
+def mandelbrot(dims, grid_size, mandel_max_iter):
+    """Create mandelbrot set
+
+    Args:
+        dims : list [x1, x2, y1, y2]
+            dimensions of the search space
+        grid_size : int
+            length of grid in each direction
+        mandel_max_iter : int
+            maximum number of iterations per candidate number c
+
+    Returns:
+        mandelbrot_set : 2D numpy array
+            matrix of number of iterations before escaping mandelbrot
+    """
+
+    # create grid points to evaluate for mandelbrot set
+    x_grid = np.linspace(dims[0], dims[1], grid_size)
+    y_grid = np.linspace(dims[2], dims[3], grid_size)
+
+    # create matrix to store number of iterations to escape the set
+    # if it doesnt escape: iterations is set to 0
+    mandelbrot_set = np.zeros((grid_size, grid_size))
+
+    # loop over all coordinates
+    for i, x in enumerate(x_grid):
+
+        # print("Progression: {:.2%}".format(i/len(x_grid)))
+        for j, y in enumerate(y_grid):
+
+            # create imaginary number c = a + bi
+            c = complex(x, y)
+
+            # max size of mandelbrot set is 2
+            z = 0
+            k = 0
+            while abs(z) <= 2 and k < mandel_max_iter:
+
+                # mandelbrot formula z_n+1 = (z_n)^2 + c
+                z = z**2 + c
+                k += 1
+
+            # save the number of iterations. 0 denotes mandelbrot set number
+            # if after mandel_max_iter z < 2 --> member of mandelbrot set
+            mandelbrot_set[j][i] = k - 1
+
+    return mandelbrot_set
+
+def plot_layout():
+    """Standard plot layout for figures """
+    fig = plt.figure(facecolor='w')
+    ax = fig.add_subplot(111, facecolor='#e8e8e8', axisbelow=True)
+
+    return fig, ax
+
+def load_mandelbrot(fname):
+    """Load mandelbrot set """
+    return np.loadtxt(fname)
+
+def save_mandelbot(fname, mandelbrot_set):
+    """Save mandelbrot set """
+    return np.savetxt(fname, mandelbrot_set)
 
 def main():
 
@@ -181,7 +179,6 @@ def main():
         # integrate mandelbrot set using max_iter
         surface = integrate_mandelbrot(mandelbrot_set_conv, dims, grid_size, max_iter, antithetic=True)
         mandelbrot_areas_conv.append(surface)
-        print(surface)
 
     # calculate A_js - A_is
     area_diffs = [(mandelbrot_area_conv - mandelbrot_area) for mandelbrot_area_conv in mandelbrot_areas_conv]
