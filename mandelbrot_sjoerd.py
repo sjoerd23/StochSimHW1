@@ -108,8 +108,8 @@ def main():
 
     np.random.seed()
     dims = [-2, 0.6, -1.1, 1.1]
-    grid_size = 1000
-    mandel_max_iter = 50
+    grid_size = 256
+    mandel_max_iter = 256
     fname = "results/mandelbrot_{}_{}".format(grid_size, mandel_max_iter)
 
     # set to True if you want to calculate a new mandelbrot set
@@ -123,9 +123,8 @@ def main():
         mandelbrot_set = mandelbrot(dims, grid_size, mandel_max_iter)
         save_mandelbot(fname, mandelbrot_set)
         print("Time to calculate mandelbrot set: {} s".format(time.time() - time_start))
-    else:
 
-        # load mandelbrot set (only use this when not calculating a new mandelbrot set)
+    else:
         mandelbrot_set = load_mandelbrot(fname)
 
     # calculate integral of mandelbrot set using Monte Carlo
@@ -149,7 +148,9 @@ def main():
         mandelbrot_set_conv = mandelbrot(dims, grid_size, max_iter)
 
         # integrate mandelbrot set using max_iter
-        mandelbrot_areas_conv.append(integrate_mandelbrot(mandelbrot_set_conv, dims, grid_size, max_iter))
+        surface = integrate_mandelbrot(mandelbrot_set_conv, dims, grid_size, max_iter)
+        mandelbrot_areas_conv.append(surface)
+        print(surface)
 
     # calculate A_js - A_is
     area_diffs = [(mandelbrot_area_conv - mandelbrot_area) for mandelbrot_area_conv in mandelbrot_areas_conv]
