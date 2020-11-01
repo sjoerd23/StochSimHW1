@@ -7,12 +7,16 @@ def mandelbrot(dims, grid_size, mandel_max_iter):
     """Create mandelbrot set
 
     Args:
-        grid_size -- length of grid in each direction
-        mandel_max_iter -- maximum number of iterations per candidate number c
+        dims : list [x1, x2, y1, y2]
+            dimensions of the search space
+        grid_size : int
+            length of grid in each direction
+        mandel_max_iter : int
+            maximum number of iterations per candidate number c
 
     Returns:
-        mandelbrot_set -- matrix of number of iterations before escaping mandelbrot.
-                          Equal to mandel_max_iter if in mandelbrot set
+        mandelbrot_set : 2D numpy array
+            matrix of number of iterations before escaping mandelbrot
     """
 
     # create grid points to evaluate for mandelbrot set
@@ -62,7 +66,24 @@ def save_mandelbot(fname, mandelbrot_set):
     return np.savetxt(fname, mandelbrot_set)
 
 def integrate_mandelbrot(mandelbrot_set, dims, grid_size, mandel_max_iter, mc_max_iter=10000):
-    """Integrate the mandelbrot set using Monte Carlo method """
+    """Integrate the mandelbrot set using Monte Carlo method
+
+    Args:
+        mandelbrot_set : 2D numpy array
+            matrix of number of iterations before escaping mandelbrot
+        dims : list [x1, x2, y1, y2]
+            dimensions of the search space
+        grid_size : int
+            length of grid in each direction
+        mandel_max_iter : int
+            maximum number of iterations per candidate number c
+        mc_max_iter : int
+            number of random points to throw for integration
+
+    Returns:
+        surface : float
+            estimated surface of integral
+    """
 
     hit = 0
     miss = 0
