@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-def integrate_mandelbrot(mandelbrot_set, dims, grid_size, mandel_max_iter, antithetic=False, mc_max_iter=10000):
+def integrate_mandelbrot(mandelbrot_set, dims, grid_size, mandel_max_iter, sampling="PRS", antithetic=False, mc_max_iter=10000):
     """Integrate the mandelbrot set using Monte Carlo method. User can set antithetic to True
     to use antithetic variables
 
@@ -15,6 +15,8 @@ def integrate_mandelbrot(mandelbrot_set, dims, grid_size, mandel_max_iter, antit
             length of grid in each direction
         mandel_max_iter : int
             maximum number of iterations per candidate number c
+        sampling : string ("PRS" or "LHS", default: "PRS")
+            sampling technique to use for generating random numbers
         antithetic : boolean
             use antithetic variate
         mc_max_iter : int
@@ -25,6 +27,10 @@ def integrate_mandelbrot(mandelbrot_set, dims, grid_size, mandel_max_iter, antit
             estimated surface of integral
     """
 
+    if sampling not in ["PRS", "LHS"]:
+        print("Selected non-valid sampling technique. Switched to default: PRS")
+        sampling = "PRS"
+
     hit = 0
     miss = 0
 
@@ -32,11 +38,21 @@ def integrate_mandelbrot(mandelbrot_set, dims, grid_size, mandel_max_iter, antit
     if antithetic:
         mc_max_iter = int(mc_max_iter / 2)
 
-    for i in range(mc_max_iter):
+    if sampling == "PRS":
+        # generate pure random sampled numbers
+        x_rands, y_rands = pure_random_sampling(grid_size, mc_max_iter)
+    elif sampling == "LHS":
+        x_rands, y_rands = latin_hypercube_sampling(grid_size, int(grid_size/10))
+    else:
+        # something went wrong, terminate program
+        print("Non-valid sampling technique. Terminating program...")
+        exit(1)
 
-        # throw a random number on the grid
-        x_rand = np.random.randint(grid_size)
-        y_rand = np.random.randint(grid_size)
+    # for each coordinate in (x_rands, y_rands) throw it on the grid and evaluate it as miss or hit
+    for i in range(len(x_rands)):
+
+        x_rand = x_rands[i]
+        y_rand = y_rands[i]
         if mandelbrot_set[y_rand][x_rand] == mandel_max_iter - 1:
             hit += 1
         else:
@@ -57,6 +73,61 @@ def integrate_mandelbrot(mandelbrot_set, dims, grid_size, mandel_max_iter, antit
 
     # return area of mandelbrot set
     return hit / (miss + hit) * (surface)
+
+def latin_hypercube_sampling(grid_size, n_partitions):
+    """Latin hypercube sampling (LHS)
+
+    Args:
+        grid_size : int
+            length of grid in each direction
+        n_partitions : int
+            number of partitions in each dimension (preferably grid_size/n_partitions=int)
+
+    Returns:
+        x_rands : list
+            list of randomly sampled x values using LHS
+        x_rands : list
+            list of randomly sampled y values using LHS
+    """
+
+    x_rands = []
+    y_rands = []
+
+    partition_size = int(grid_size / n_partitions)
+    for i in range(n_partitions):
+        partition_start = int(i * grid_size / n_partitions)
+        print(partition_start)
+        x_rands.append(partition_start + np.random.randint(partition_size))
+        y_rands.append(partition_start + np.random.randint(partition_size))
+
+    return x_rands, y_rands
+
+def pure_random_sampling(grid_size, n_samples):
+    """Pure random sampling (PRS)
+
+    Args:
+        grid_size : int
+            length of grid in each direction
+        n_samples : int
+            number of random numbers to throw
+
+    Returns:
+        x_rands : list
+            list of randomly sampled x values using PRS
+        x_rands : list
+            list of randomly sampled y values using PRS
+    """
+
+    x_rands = []
+    y_rands = []
+
+    for i in range(n_samples):
+
+        # throw a random number on the grid
+        x_rands.append(np.random.randint(grid_size))
+        y_rands.append(np.random.randint(grid_size))
+
+    return x_rands, y_rands
 
 def mandelbrot(dims, grid_size, mandel_max_iter):
     """Create mandelbrot set
@@ -149,7 +220,8 @@ def main():
 
     # calculate integral of mandelbrot set using Monte Carlo
     ## TODO: integrate multiple times and take the mean and stddev
-    mandelbrot_area = integrate_mandelbrot(mandelbrot_set, dims, grid_size, mandel_max_iter, antithetic=antithetic, mc_max_iter=100000)
+    mandelbrot_area = integrate_mandelbrot(mandelbrot_set, dims, grid_size, mandel_max_iter,\
+                                        sampling="PRS", antithetic=antithetic, mc_max_iter=100000)
     print("The integral of the mandelbrot set is {}".format(mandelbrot_area))
 
     # plot the mandelbrot set
@@ -168,29 +240,29 @@ def main():
     ########################################################################################
 
     # investigate the convergence
-    mandelbrot_areas_conv = []
-    for max_iter in range(mandel_max_iter):
-
-        print("Evaluating max_iter {} of {} now...".format(max_iter, mandel_max_iter))
-
-        # create mandelbrot set using max_iter
-        mandelbrot_set_conv = mandelbrot(dims, grid_size, max_iter)
-
-        # integrate mandelbrot set using max_iter
-        surface = integrate_mandelbrot(mandelbrot_set_conv, dims, grid_size, max_iter, antithetic=True)
-        mandelbrot_areas_conv.append(surface)
-
-    # calculate A_js - A_is
-    area_diffs = [(mandelbrot_area_conv - mandelbrot_area) for mandelbrot_area_conv in mandelbrot_areas_conv]
-    max_iters = [max_iter for max_iter in range(mandel_max_iter)]
-
-    # plot convergence rate of integral value
-    fig2, ax2 = plot_layout()
-    plt.title("Absolute difference in surface over number of iterations")
-    plt.plot(max_iters, area_diffs)
-    plt.xlabel("Iterations")
-    plt.ylabel("Differences in surface")
-    plt.savefig("results/mandelbrot_diffs_iter_{}_{}.png".format(grid_size, mandel_max_iter), dpi=1000)
+    # mandelbrot_areas_conv = []
+    # for max_iter in range(mandel_max_iter):
+    #
+    #     print("Evaluating max_iter {} of {} now...".format(max_iter, mandel_max_iter))
+    #
+    #     # create mandelbrot set using max_iter
+    #     mandelbrot_set_conv = mandelbrot(dims, grid_size, max_iter)
+    #
+    #     # integrate mandelbrot set using max_iter
+    #     surface = integrate_mandelbrot(mandelbrot_set_conv, dims, grid_size, max_iter, sampling="PRS", antithetic=True)
+    #     mandelbrot_areas_conv.append(surface)
+    #
+    # # calculate A_js - A_is
+    # area_diffs = [(mandelbrot_area_conv - mandelbrot_area) for mandelbrot_area_conv in mandelbrot_areas_conv]
+    # max_iters = [max_iter for max_iter in range(mandel_max_iter)]
+    #
+    # # plot convergence rate of integral value
+    # fig2, ax2 = plot_layout()
+    # plt.title("Absolute difference in surface over number of iterations")
+    # plt.plot(max_iters, area_diffs)
+    # plt.xlabel("Iterations")
+    # plt.ylabel("Differences in surface")
+    # plt.savefig("results/mandelbrot_diffs_iter_{}_{}.png".format(grid_size, mandel_max_iter), dpi=1000)
     ########################################################################################
 
     plt.show()
