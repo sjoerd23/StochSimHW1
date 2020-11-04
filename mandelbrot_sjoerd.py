@@ -168,7 +168,7 @@ def mandelbrot(dims, grid_size, mandel_max_iter):
             while abs(z) <= 2 and k < mandel_max_iter:
 
                 # mandelbrot formula z_n+1 = (z_n)^2 + c
-                z = z**2 + c
+                z = z*z + c
                 k += 1
 
             # save the number of iterations. 0 denotes mandelbrot set number
@@ -186,11 +186,11 @@ def plot_layout():
 
 def load_mandelbrot(fname):
     """Load mandelbrot set """
-    return np.loadtxt(fname)
+    return np.load(fname)
 
 def save_mandelbot(fname, mandelbrot_set):
     """Save mandelbrot set """
-    return np.savetxt(fname, mandelbrot_set)
+    return np.save(fname, mandelbrot_set)
 
 def main():
 
@@ -201,7 +201,7 @@ def main():
     grid_size = 1000                # amount of grid points in each dimension
     mandel_max_iter = 256           # maximum of iterations for mandelbrot set
 
-    fname = "results/mandelbrot_{}_{}".format(grid_size, mandel_max_iter)
+    fname = "results/mandelbrot_{}_{}.npy".format(grid_size, mandel_max_iter)
 
     # set to True if you want to calculate a new mandelbrot set
     # set to False if you want to load an existing mandelbrot set from fname
