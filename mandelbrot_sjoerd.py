@@ -1,6 +1,137 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import tqdm
+
+
+class Element:
+	"""
+	A class used to represent the number of iterations and current
+	value of a single element of the mandelbrot set
+	"""
+	def __init__(self, iteration, value):
+		self.iteration = iteration
+		self.value = value
+
+
+class MandelbrotSet:
+    """
+	A class used to represent and calculate Mandelbrot sets
+
+	...
+
+	Attributes
+	----------
+	dim : list [x1, x2, y1, y2]
+		dimension of the search space
+	size : int
+		resolution of the search space
+	"""
+    def __init__(self, dims, grid_size):
+        """
+		Parameters
+		----------
+		dim : list [x1, x2, y1, y2]
+			dimension of the search space
+		size : int
+			resolution of the search space
+		"""
+        self.dims = dims
+        self.grid_size = grid_size
+        # create grid points to evaluate for mandelbrot set
+        self.x_grid = np.linspace(dims[0], dims[1], self.grid_size)
+        self.y_grid = np.linspace(dims[2], dims[3], self.grid_size)
+
+		# self.it = 0
+		# self.set = np.zeros((size, size),dtype=object)
+		# for i, x in enumerate(self.x_set):
+		# 	for j, y in enumerate(self.y_set):
+		# 		self.set[j][i] = Element(0, 0)
+
+    def calc_mandelbrot(self, mandel_max_iter):
+        """Create mandelbrot set
+
+        Args:
+            dims : list [x1, x2, y1, y2]
+                dimensions of the search space
+            grid_size : int
+                length of grid in each direction
+            mandel_max_iter : int
+                maximum number of iterations per candidate number c
+
+        Returns:
+            mandelbrot_set : 2D numpy array
+                matrix of number of iterations before escaping mandelbrot
+        """
+
+        # create matrix to store number of iterations to escape the set
+        # if it doesnt escape: iterations is set to 0
+        mandelbrot_set = np.zeros((self.grid_size, self.grid_size))
+
+        # loop over all coordinates
+        for i, x in enumerate(self.x_grid):
+
+            # print("Progression: {:.2%}".format(i/len(x_grid)))
+            for j, y in enumerate(self.y_grid):
+
+                # create imaginary number c = a + bi
+                c = complex(x, y)
+
+                # max size of mandelbrot set is 2
+                z = 0
+                k = 0
+                while abs(z) <= 2 and k < mandel_max_iter:
+
+                    # mandelbrot formula z_n+1 = (z_n)^2 + c
+                    z = z*z + c
+                    k += 1
+
+                # save the number of iterations. 0 denotes mandelbrot set number
+                # if after mandel_max_iter z < 2 --> member of mandelbrot set
+                mandelbrot_set[j][i] = k - 1
+
+        return mandelbrot_set
+
+    def mandelbrot_all_iters(self, mandel_max_iter):
+        """Computers mandelbrot sets for each iter in range of mandel_max_iter """
+
+		# mandelbrot_sets = np.array([np.zeros((self.grid_size, self.grid_size)) for _ in range(mandel_max_iter)])
+        mandelbrot_set = np.zeros((self.grid_size, self.grid_size), dtype=object)
+
+        # initiate Element for each grid point
+        for i, x in enumerate(self.x_grid):
+            for j, y in enumerate(self.y_grid):
+                mandelbrot_set[j][i] = Element(0, 0)
+
+        # calculate all iteraions of mandelbrot set
+        for mandel_iter in range(mandel_max_iter):
+            mandelbrot_set = self.single_iteration(mandelbrot_set, mandel_iter)
+
+        return mandelbrot_set
+
+    def single_iteration(self, mandelbrot_set, mandel_iter):
+        """Computes a single iterations of the equation
+		n_2 = n_1**2 + c for all elements within abs(n) < 2
+        """
+
+        # loop over all coordinates
+        for i, x in enumerate(self.x_grid):
+            for j, y in enumerate(self.y_grid):
+                element = mandelbrot_set[j][i]
+                iterations = element.iteration
+                value = element.value
+
+                if iterations == mandel_iter:
+
+                    # create imaginary number c = a + bi
+                    c = complex(x, y)
+                    element.value = value*value + c
+                    if abs(element.value) <= 2:
+                        element.iteration += 1
+                        mandelbrot_set[j][i] = element
+
+        return mandelbrot_set
+
 
 def integrate_mandelbrot(mandelbrot_set, dims, grid_size, mandel_max_iter, sampling="PRS", antithetic=False, mc_max_iter=10000):
     """Integrate the mandelbrot set using Monte Carlo method. User can set antithetic to True
@@ -129,53 +260,53 @@ def pure_random_sampling(grid_size, n_samples):
 
     return x_rands, y_rands
 
-def mandelbrot(dims, grid_size, mandel_max_iter):
-    """Create mandelbrot set
-
-    Args:
-        dims : list [x1, x2, y1, y2]
-            dimensions of the search space
-        grid_size : int
-            length of grid in each direction
-        mandel_max_iter : int
-            maximum number of iterations per candidate number c
-
-    Returns:
-        mandelbrot_set : 2D numpy array
-            matrix of number of iterations before escaping mandelbrot
-    """
-
-    # create grid points to evaluate for mandelbrot set
-    x_grid = np.linspace(dims[0], dims[1], grid_size)
-    y_grid = np.linspace(dims[2], dims[3], grid_size)
-
-    # create matrix to store number of iterations to escape the set
-    # if it doesnt escape: iterations is set to 0
-    mandelbrot_set = np.zeros((grid_size, grid_size))
-
-    # loop over all coordinates
-    for i, x in enumerate(x_grid):
-
-        # print("Progression: {:.2%}".format(i/len(x_grid)))
-        for j, y in enumerate(y_grid):
-
-            # create imaginary number c = a + bi
-            c = complex(x, y)
-
-            # max size of mandelbrot set is 2
-            z = 0
-            k = 0
-            while abs(z) <= 2 and k < mandel_max_iter:
-
-                # mandelbrot formula z_n+1 = (z_n)^2 + c
-                z = z*z + c
-                k += 1
-
-            # save the number of iterations. 0 denotes mandelbrot set number
-            # if after mandel_max_iter z < 2 --> member of mandelbrot set
-            mandelbrot_set[j][i] = k - 1
-
-    return mandelbrot_set
+# def mandelbrot(dims, grid_size, mandel_max_iter):
+#     """Create mandelbrot set
+#
+#     Args:
+#         dims : list [x1, x2, y1, y2]
+#             dimensions of the search space
+#         grid_size : int
+#             length of grid in each direction
+#         mandel_max_iter : int
+#             maximum number of iterations per candidate number c
+#
+#     Returns:
+#         mandelbrot_set : 2D numpy array
+#             matrix of number of iterations before escaping mandelbrot
+#     """
+#
+#     # create grid points to evaluate for mandelbrot set
+#     x_grid = np.linspace(dims[0], dims[1], grid_size)
+#     y_grid = np.linspace(dims[2], dims[3], grid_size)
+#
+#     # create matrix to store number of iterations to escape the set
+#     # if it doesnt escape: iterations is set to 0
+#     mandelbrot_set = np.zeros((grid_size, grid_size))
+#
+#     # loop over all coordinates
+#     for i, x in enumerate(x_grid):
+#
+#         # print("Progression: {:.2%}".format(i/len(x_grid)))
+#         for j, y in enumerate(y_grid):
+#
+#             # create imaginary number c = a + bi
+#             c = complex(x, y)
+#
+#             # max size of mandelbrot set is 2
+#             z = 0
+#             k = 0
+#             while abs(z) <= 2 and k < mandel_max_iter:
+#
+#                 # mandelbrot formula z_n+1 = (z_n)^2 + c
+#                 z = z*z + c
+#                 k += 1
+#
+#             # save the number of iterations. 0 denotes mandelbrot set number
+#             # if after mandel_max_iter z < 2 --> member of mandelbrot set
+#             mandelbrot_set[j][i] = k - 1
+#
+#     return mandelbrot_set
 
 def plot_layout():
     """Standard plot layout for figures """
@@ -199,9 +330,21 @@ def main():
     antithetic = True               # use antithetic variables while integrating
     dims = [-2, 0.6, -1.1, 1.1]     # dimensions of the search space [x1, x2, y1, y2]
     grid_size = 1000                # amount of grid points in each dimension
-    mandel_max_iter = 256           # maximum of iterations for mandelbrot set
+    mandel_max_iter = 50           # maximum of iterations for mandelbrot set
 
     fname = "results/mandelbrot_{}_{}.npy".format(grid_size, mandel_max_iter)
+
+    # get a new mandelbrot_object
+    mandelbrot = MandelbrotSet(dims, grid_size)
+
+    # calculate mandelbrot for all iters
+    time_start = time.time()
+
+    # calculate the mandelbrot set and save to txt file
+    mandelbrot_set = mandelbrot.mandelbrot_all_iters(mandel_max_iter)
+
+    # save_mandelbot(fname, mandelbrot_sets)
+    print("Time to calculate mandelbrot set for all iters: {} s".format(time.time() - time_start))
 
     # set to True if you want to calculate a new mandelbrot set
     # set to False if you want to load an existing mandelbrot set from fname
@@ -211,7 +354,7 @@ def main():
         time_start = time.time()
 
         # calculate the mandelbrot set and save to txt file
-        mandelbrot_set = mandelbrot(dims, grid_size, mandel_max_iter)
+        mandelbrot_set = mandelbrot.calc_mandelbrot(mandel_max_iter)
         save_mandelbot(fname, mandelbrot_set)
         print("Time to calculate mandelbrot set: {} s".format(time.time() - time_start))
 
