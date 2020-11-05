@@ -168,6 +168,7 @@ class Mandelbrot:
         """Save mandelbrot set """
         np.save(self.fname, self.mandelbrot_set)
 
+    ### NOT WORKING AT THE MOMENT. WORK IN PROGRESS ###
     def calc_mandelbrot_all_iters(self, mandel_max_iter=None):
         """Computers mandelbrot sets for each iter in range of mandel_max_iter """
         if mandel_max_iter is None:
@@ -187,6 +188,7 @@ class Mandelbrot:
 
         return mandelbrot_set
 
+    ### NOT WORKING AT THE MOMENT. WORK IN PROGRESS ###
     def single_iteration(self, mandelbrot_set, mandel_iter):
         """Computes a single iterations of the equation
         n_2 = n_1**2 + c for all elements within abs(n) < 2
@@ -294,6 +296,9 @@ def main():
     mandelbrot_area = mandelbrot.integrate_mandelbrot()
     print("The integral of the mandelbrot set is {:.6f}".format(mandelbrot_area))
 
+
+
+    ### NOT WORKING AT THE MOMENT. WORK IN PROGRESS ###
     ###
     # comment out next part if you only want to calculate the integral and don't want to see the
     # convergence rate (takes relatively long to calculate)
