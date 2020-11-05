@@ -47,6 +47,45 @@ class Mandelbrot:
         # if it doesnt escape: iterations is set to mandel_max_iter
         self.mandelbrot_set = np.zeros((self.grid_size, self.grid_size))
 
+    def calc_conv_mandelbrot(self, mandel_max_iter=None):
+        """Calculate the convergence rate of the integral of the mandelbrot set depending on
+        the number of iterations for the creation of the mandelbrot set """
+        if mandel_max_iter is None:
+            mandel_max_iter = self.mandel_max_iter
+
+        mandelbrot_set_conv = np.zeros((self.grid_size, self.grid_size), dtype=object)
+
+        # initiate Element for each grid point
+        for i, x in enumerate(self.x_grid):
+            for j, y in enumerate(self.y_grid):
+                mandelbrot_set_conv[j][i] = Element(0, 0)
+
+        # store all calculated areas
+        areas_conv = []
+
+        # calculate all iterations and for each iterations the integral
+        for mandel_iter in range(mandel_max_iter):
+            print("Progress: {:.2%}".format(mandel_iter/mandel_max_iter))
+            mandelbrot_set_conv = self.single_iteration(mandelbrot_set_conv, mandel_iter)
+
+            # to integrate we need a mandelbrot_set without Elements objects inside, but just the
+            # amount of iterations
+            mandelbrot_set_conv_iter = self.mandelbrot_elem_to_iter(mandelbrot_set_conv)
+            areas_conv.append(self.integrate_mandelbrot(mandelbrot_set=mandelbrot_set_conv_iter, mandel_max_iter=mandel_iter+2))
+
+        # calculate A_js - A_is
+        area_diffs = [abs(area_conv - areas_conv[-1]) for area_conv in areas_conv]
+        max_iters = [max_iter for max_iter in range(mandel_max_iter)]
+
+        # plot convergence rate of integral value
+        fig2, ax2 = plot_layout()
+        plt.title("Absolute difference in area over number of iterations")
+        plt.plot(max_iters, area_diffs)
+        plt.xlabel("Iterations")
+        plt.ylabel("Differences in area")
+        # plt.savefig("results/mandelbrot_diffs_iter_{}_{}.png".format(grid_size, mandel_max_iter), dpi=1000)
+        return
+
     def calc_mandelbrot_set(self, mandel_max_iter=None):
         """Create mandelbrot set
 
@@ -80,7 +119,18 @@ class Mandelbrot:
 
         return self.mandelbrot_set
 
-    def integrate_mandelbrot(self, mandel_max_iter=None, sampling="PRS", antithetic=True, mc_max_iter=100000):
+    def mandelbrot_elem_to_iter(self, mandelbrot_set_elem):
+        """Convert mandelbrot set consisting of Elements to mandelbrot set consisting of Iterations
+        """
+        mandelbrot_set_iter = np.zeros((self.grid_size, self.grid_size), dtype=np.int)
+
+        for i, x in enumerate(self.x_grid):
+            for j, y in enumerate(self.y_grid):
+                mandelbrot_set_iter[j][i] = int(mandelbrot_set_elem[j][i].iteration)
+
+        return mandelbrot_set_iter
+
+    def integrate_mandelbrot(self, mandelbrot_set=None, mandel_max_iter=None, sampling="PRS", antithetic=True, mc_max_iter=100000):
         """Integrate the mandelbrot set using Monte Carlo method. User can set antithetic to True
         to use antithetic variables
 
@@ -98,9 +148,10 @@ class Mandelbrot:
             area : float
                 estimated area of integral
         """
+        if mandelbrot_set is None:
+            mandelbrot_set = self.mandelbrot_set
         if mandel_max_iter is None:
             mandel_max_iter = self.mandel_max_iter
-
         if sampling not in ["PRS", "LHS"]:
             print("Selected non-valid sampling technique. Switched to default: PRS")
             sampling = "PRS"
@@ -127,7 +178,7 @@ class Mandelbrot:
 
             x_rand = x_rands[i]
             y_rand = y_rands[i]
-            if self.mandelbrot_set[y_rand][x_rand] == mandel_max_iter - 1:
+            if mandelbrot_set[y_rand][x_rand] == mandel_max_iter - 1:
                 hit += 1
             else:
                 miss += 1
@@ -137,7 +188,7 @@ class Mandelbrot:
                 x_rand_antithetic = 1 - x_rand
                 y_rand_antithetic = 1 - y_rand
 
-                if self.mandelbrot_set[y_rand_antithetic][x_rand_antithetic] == mandel_max_iter - 1:
+                if mandelbrot_set[y_rand_antithetic][x_rand_antithetic] == mandel_max_iter - 1:
                     hit += 1
                 else:
                     miss += 1
@@ -158,7 +209,25 @@ class Mandelbrot:
         if save_true_size:
             plt.imsave("results/mandelbrot_{}_{}_true_size.png".format(self.grid_size, self.mandel_max_iter), \
                 arr=self.mandelbrot_set, format='png')
-        return plt.show()
+
+        return
+
+    def single_iteration(self, mandelbrot_set, mandel_iter):
+        """Computes a single iterations of the equation
+        n_2 = n_1**2 + c for all elements within abs(n) < 2
+        """
+        for i, x in enumerate(self.x_grid):
+            for j, y in enumerate(self.y_grid):
+                element = mandelbrot_set[j][i]
+                iterations = element.iteration
+                value = element.value
+                if iterations == mandel_iter:
+                    c = complex(x, y)
+                    next_value = value * value + c
+                    if abs(next_value) <= 2:
+                        mandelbrot_set[j][i] = Element(mandel_iter+1, next_value)
+
+        return mandelbrot_set
 
     def load_mandelbrot(self):
         """Load mandelbrot set """
@@ -168,42 +237,6 @@ class Mandelbrot:
         """Save mandelbrot set """
         np.save(self.fname, self.mandelbrot_set)
 
-    ### NOT WORKING AT THE MOMENT. WORK IN PROGRESS ###
-    def calc_mandelbrot_all_iters(self, mandel_max_iter=None):
-        """Computers mandelbrot sets for each iter in range of mandel_max_iter """
-        if mandel_max_iter is None:
-            mandel_max_iter = self.mandel_max_iter
-
-        # mandelbrot_sets = np.array([np.zeros((self.grid_size, self.grid_size)) for _ in range(mandel_max_iter)])
-        mandelbrot_set = np.zeros((self.grid_size, self.grid_size), dtype=object)
-
-        # initiate Element for each grid point
-        for i, x in enumerate(self.x_grid):
-            for j, y in enumerate(self.y_grid):
-                mandelbrot_set[j][i] = Element(0, 0)
-
-        # calculate all iteraions of mandelbrot set
-        for mandel_iter in range(tqdm.tqdm(mandel_max_iter)):
-            mandelbrot_set = self.single_iteration(mandelbrot_set, mandel_iter)
-
-        return mandelbrot_set
-
-    ### NOT WORKING AT THE MOMENT. WORK IN PROGRESS ###
-    def single_iteration(self, mandelbrot_set, mandel_iter):
-        """Computes a single iterations of the equation
-        n_2 = n_1**2 + c for all elements within abs(n) < 2
-        """
-        for i, x in enumerate(self.x_grid):
-            for j, y in enumerate(self.y_grid):
-                element = mandelbrot_set[j][i]
-
-                if element.iteration == mandel_iter:
-                    c = complex(x, y)
-                    element.value = element.value*element.value + c
-                    if abs(element.value) <= 2:
-                        element.iteration += 1
-
-        return mandelbrot_set
 
 # DISCLAIMER: not sure if implementation is correct
 ## TODO: change to PyDOE lhs() function
@@ -275,7 +308,7 @@ def main():
 
     antithetic = True               # use antithetic variables while integrating
     dims = [-2, 0.6, -1.1, 1.1]     # dimensions of the search space [x1, x2, y1, y2]
-    grid_size = 500                # amount of grid points in each dimension
+    grid_size = 1000                # amount of grid points in each dimension
     mandel_max_iter = 256           # maximum of iterations for mandelbrot set
 
     # set to True if you want to calculate a new mandelbrot set
@@ -296,43 +329,11 @@ def main():
     mandelbrot_area = mandelbrot.integrate_mandelbrot()
     print("The integral of the mandelbrot set is {:.6f}".format(mandelbrot_area))
 
+    # investigate the convergence with mandel_max_iter
+    mandelbrot.calc_conv_mandelbrot()
 
-
-    ### NOT WORKING AT THE MOMENT. WORK IN PROGRESS ###
-    ###
-    # comment out next part if you only want to calculate the integral and don't want to see the
-    # convergence rate (takes relatively long to calculate)
-    ###
-    ########################################################################################
-
-    # investigate the convergence
-    # mandelbrot_areas_conv = []
-    # for max_iter in range(mandel_max_iter):
-    #
-    #     print("Evaluating max_iter {} of {} now...".format(max_iter, mandel_max_iter))
-    #
-    #     # create mandelbrot set using max_iter
-    #     mandelbrot_set_conv = mandelbrot(dims, grid_size, max_iter)
-    #
-    #     # integrate mandelbrot set using max_iter
-    #     area = integrate_mandelbrot(mandelbrot_set_conv, dims, grid_size, max_iter, sampling="PRS", antithetic=True)
-    #     mandelbrot_areas_conv.append(area)
-    #
-    # # calculate A_js - A_is
-    # area_diffs = [(mandelbrot_area_conv - mandelbrot_area) for mandelbrot_area_conv in mandelbrot_areas_conv]
-    # max_iters = [max_iter for max_iter in range(mandel_max_iter)]
-    #
-    # # plot convergence rate of integral value
-    # fig2, ax2 = plot_layout()
-    # plt.title("Absolute difference in area over number of iterations")
-    # plt.plot(max_iters, area_diffs)
-    # plt.xlabel("Iterations")
-    # plt.ylabel("Differences in area")
-    # plt.savefig("results/mandelbrot_diffs_iter_{}_{}.png".format(grid_size, mandel_max_iter), dpi=1000)
-    ########################################################################################
-
-    # plt.show()
-    print("Done!")
+    # show all plots
+    plt.show()
 
     return
 
