@@ -130,11 +130,56 @@ class Mandelbrot:
 
         return mandelbrot_set_iter
 
+    def integrate_mandelbrot_stat(self, n_estimates=10, mandelbrot_set=None, mandel_max_iter=None, sampling="PRS", antithetic=True, mc_max_iter=100000):
+        """Integrate the mandelbrot set using Monte Carlo method. User can set antithetic to True
+        to use antithetic variables. With statistics
+
+        Args:
+            n_estimates : int
+                the amount of integrals evaluated
+            mandelbrot_set : numpy 2D array
+                mandelbrot set, if None defaults to self.mandelbrot_set
+            mandel_max_iter : int
+                maximum number of iterations per candidate number c
+            sampling : string ("PRS" or "LHS", default: "PRS")
+                sampling technique to use for generating random numbers
+            antithetic : boolean
+                use antithetic variate
+            mc_max_iter : int
+                number of random points to throw for integration
+
+        Returns:
+            areas : list of floats
+                estimated areas of integral
+            mean : float
+                mean of areas
+            stddev : float
+                standard deviation of areas
+            var : float
+                variance of areas
+        """
+        if mandelbrot_set is None:
+            mandelbrot_set = self.mandelbrot_set
+        if mandel_max_iter is None:
+            mandel_max_iter = self.mandel_max_iter
+
+        areas = np.zeros(n_estimates)
+        for i in range(n_estimates):
+            areas[i] = self.integrate_mandelbrot(mandelbrot_set=mandelbrot_set, mandel_max_iter=mandel_max_iter, sampling=sampling)
+
+        mean = np.mean(areas)
+        stddev = np.std(areas)
+        var = np.var(areas)
+
+        return areas, mean, stddev, var
+
     def integrate_mandelbrot(self, mandelbrot_set=None, mandel_max_iter=None, sampling="PRS", antithetic=True, mc_max_iter=100000):
         """Integrate the mandelbrot set using Monte Carlo method. User can set antithetic to True
         to use antithetic variables
 
         Args:
+            mandelbrot_set : numpy 2D array
+                mandelbrot set, if None uses self.mandelbrot_set
             mandel_max_iter : int
                 maximum number of iterations per candidate number c
             sampling : string ("PRS" or "LHS", default: "PRS")
@@ -219,13 +264,13 @@ class Mandelbrot:
         for i, x in enumerate(self.x_grid):
             for j, y in enumerate(self.y_grid):
                 element = mandelbrot_set[j][i]
-                iterations = element.iteration
                 value = element.value
-                if iterations == mandel_iter:
+                if element.iteration == mandel_iter:
                     c = complex(x, y)
-                    next_value = value * value + c
-                    if abs(next_value) <= 2:
-                        mandelbrot_set[j][i] = Element(mandel_iter+1, next_value)
+                    element.value = value * value + c
+                    if abs(element.value) <= 2:
+                        element.iteration = mandel_iter + 1
+                        # mandelbrot_set[j][i] = Element(mandel_iter+1, next_value)
 
         return mandelbrot_set
 
@@ -308,8 +353,8 @@ def main():
 
     antithetic = True               # use antithetic variables while integrating
     dims = [-2, 0.6, -1.1, 1.1]     # dimensions of the search space [x1, x2, y1, y2]
-    grid_size = 500                # amount of grid points in each dimension
-    mandel_max_iter = 20           # maximum of iterations for mandelbrot set
+    grid_size = 1000                # amount of grid points in each dimension
+    mandel_max_iter = 256           # maximum of iterations for mandelbrot set
 
     # set to True if you want to calculate a new mandelbrot set
     # set to False if you want to load an existing mandelbrot set from fname
@@ -328,6 +373,12 @@ def main():
     # integrate mandelbrot set
     mandelbrot_area = mandelbrot.integrate_mandelbrot()
     print("The integral of the mandelbrot set is {:.6f}".format(mandelbrot_area))
+
+    # calculate mean, stddev, var for n_estimates times of integrating mandelbrot set
+    areas, mean, stddev, var = mandelbrot.integrate_mandelbrot_stat(n_estimates=10)
+    print("Mean: {}".format(mean))
+    print("Standard deviation: {}".format(stddev))
+    print("Variance: {}".format(var))
 
     # investigate the convergence with mandel_max_iter
     mandelbrot.calc_conv_mandelbrot()
