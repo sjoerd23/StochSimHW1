@@ -130,12 +130,11 @@ class Mandelbrot:
 
         return mandelbrot_set_iter
 
-    def integrate_mandelbrot_stat(self, n_estimates=10, mandelbrot_set=None, mandel_max_iter=None, sampling="PRS", antithetic=True, mc_max_iter=100000):
-        """Integrate the mandelbrot set using Monte Carlo method. User can set antithetic to True
-        to use antithetic variables. With statistics
+    def integrate_mandelbrot_stat(self, n_repetitions=100, mandelbrot_set=None, mandel_max_iter=None, sampling="PRS", antithetic=True, mc_max_iter=100000):
+        """Integrate the mandelbrot set n_repitions times using self.integrate_mandelbrot()
 
         Args:
-            n_estimates : int
+            n_repetitions : int
                 the amount of integrals evaluated
             mandelbrot_set : numpy 2D array
                 mandelbrot set, if None defaults to self.mandelbrot_set
@@ -153,25 +152,26 @@ class Mandelbrot:
                 estimated areas of integral
             mean : float
                 mean of areas
-            stddev : float
+            sample_stddev : float
                 standard deviation of areas
             var : float
                 variance of areas
+            interval : float
+                confidence interval of p = 95%
         """
-        if mandelbrot_set is None:
-            mandelbrot_set = self.mandelbrot_set
-        if mandel_max_iter is None:
-            mandel_max_iter = self.mandel_max_iter
-
-        areas = np.zeros(n_estimates)
-        for i in range(n_estimates):
+        areas = np.zeros(n_repetitions)
+        for i in range(n_repetitions):
             areas[i] = self.integrate_mandelbrot(mandelbrot_set=mandelbrot_set, mandel_max_iter=mandel_max_iter, sampling=sampling)
 
         mean = np.mean(areas)
-        stddev = np.std(areas)
+        sample_stddev = np.std(areas, ddof=1) # we want sample stddev, so ddof=1
         var = np.var(areas)
 
-        return areas, mean, stddev, var
+        # calculate confidence interval with p = 95% -> lambda 1.96
+        # a = lambda sample_stddev / sqrt(n_repetitions)
+        lambda_p = 1.96
+        interval = lambda_p * sample_stddev / np.sqrt(n_repetitions)
+        return areas, mean, sample_stddev, var, interval
 
     def integrate_mandelbrot(self, mandelbrot_set=None, mandel_max_iter=None, sampling="PRS", antithetic=True, mc_max_iter=100000):
         """Integrate the mandelbrot set using Monte Carlo method. User can set antithetic to True
@@ -212,7 +212,11 @@ class Mandelbrot:
             # generate pure random sampled numbers
             x_rands, y_rands = pure_random_sampling(self.grid_size, mc_max_iter)
         elif sampling == "LHS":
-            x_rands, y_rands = latin_hypercube_sampling(self.grid_size, int(self.grid_size/10))
+
+            # preferably grid_size is dividable by partition_size
+            partition_size = 5
+            n_partitions = int(self.grid_size/partition_size)
+            x_rands, y_rands = latin_hypercube_sampling(self.grid_size, n_partitions)
         else:
             # something went wrong, terminate program
             print("Non-valid sampling technique. Terminating program...")
@@ -283,7 +287,7 @@ class Mandelbrot:
         np.save(self.fname, self.mandelbrot_set)
 
 
-# DISCLAIMER: not sure if implementation is correct
+# DISCLAIMER: This implementation should be completely correct
 ## TODO: change to PyDOE lhs() function
 def latin_hypercube_sampling(grid_size, n_partitions):
     """Latin hypercube sampling (LHS)
@@ -371,17 +375,18 @@ def main():
     mandelbrot.plot_mandelbrot(save_figure=False, save_true_size=False)
 
     # integrate mandelbrot set
-    mandelbrot_area = mandelbrot.integrate_mandelbrot()
+    mandelbrot_area = mandelbrot.integrate_mandelbrot(sampling="LHS")
     print("The integral of the mandelbrot set is {:.6f}".format(mandelbrot_area))
 
-    # calculate mean, stddev, var for n_estimates times of integrating mandelbrot set
-    areas, mean, stddev, var = mandelbrot.integrate_mandelbrot_stat(n_estimates=10)
+    # calculate areas, mean, sample_stddev, var and confidence interval for n_repetitions times of integrating mandelbrot set
+    areas, mean, sample_stddev, var, interval = mandelbrot.integrate_mandelbrot_stat(n_repetitions=10, sampling="LHS")
     print("Mean: {}".format(mean))
-    print("Standard deviation: {}".format(stddev))
+    print("Standard deviation: {}".format(sample_stddev))
     print("Variance: {}".format(var))
+    print("95% confidence interval: {}".format(interval))
 
     # investigate the convergence with mandel_max_iter
-    mandelbrot.calc_conv_mandelbrot()
+    # mandelbrot.calc_conv_mandelbrot()
 
     # show all plots
     plt.show()
