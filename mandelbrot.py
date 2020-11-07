@@ -288,7 +288,6 @@ class Mandelbrot:
 
 
 # DISCLAIMER: This implementation should be completely correct
-## TODO: change to PyDOE lhs() function
 def latin_hypercube_sampling(grid_size, n_partitions):
     """Latin hypercube sampling (LHS)
 
