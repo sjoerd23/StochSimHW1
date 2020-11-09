@@ -166,7 +166,7 @@ def latin_hypercube_sampling(dims, n_samples, antithetic):
     return x_rands, y_rands
 
 def orthogonal_sampling(dims, n_samples):
-    """Pure random sampling (PRS)
+    """Orthogonal Sampling (OS)
 
     Args:
         dims : list [x1, x2, y1, y2]
@@ -176,11 +176,45 @@ def orthogonal_sampling(dims, n_samples):
 
     Returns:
         x_rands : list
-            list of randomly sampled x values using PRS
+            list of randomly sampled x values using OS
         x_rands : list
-            list of randomly sampled y values using PRS
+            list of randomly sampled y values using OS
     """
-    raise NotImplementedError
+    if np.sqrt(n_samples) % 1 != 0:
+        raise ValueError("The number of samples needs to be the square of an integer")
+
+    # initialise the grids and determine scale factor
+    major = int(np.sqrt(n_samples))
+    xlist = np.zeros((major, major))
+    ylist = np.zeros((major, major))
+    xscale = (dims[1] - dims[0]) / n_samples
+    yscale = (dims[3] - dims[2]) / n_samples
+
+
+    m = 0
+    for i in range(major):
+        for j in range(major):
+            xlist[i][j] = m
+            ylist[i][j] = m
+            m += 1
+
+
+    x_rands = []
+    y_rands = []
+
+    # permute the major columns and rows
+    for i in range(major):
+        np.random.shuffle(xlist[i])
+        np.random.shuffle(ylist[i])
+
+    # assign a random value to each minor grid
+    for i in range(major):
+        for j in range(major):
+            x = dims[0] + xscale * (xlist[i][j] + np.random.random())
+            y = dims[2] + yscale * (ylist[j][i] + np.random.random())
+            x_rands.append(x)
+            y_rands.append(y)
+
     return x_rands, y_rands
 
 def pure_random_sampling(dims, n_samples, antithetic):
@@ -324,25 +358,25 @@ def main():
     ###############################################################################################
     # set to True if you want to calculate a new mandelbrot set
     # set to False if you want to load an existing mandelbrot set from fname
-    calc_new_mandelbrot_set = True
+    # calc_new_mandelbrot_set = True
 
-    # create a new mandelbrot object
-    mandelbrot = Mandelbrot(dims, grid_size, mandel_max_iter)
-    if calc_new_mandelbrot_set == True:
-        mandelbrot.calc_mandelbrot_set()
-        mandelbrot.save_mandelbot()
-    else:
-        mandelbrot.load_mandelbrot()
+    # # create a new mandelbrot object
+    # mandelbrot = Mandelbrot(dims, grid_size, mandel_max_iter)
+    # if calc_new_mandelbrot_set == True:
+    #     mandelbrot.calc_mandelbrot_set()
+    #     mandelbrot.save_mandelbot()
+    # else:
+    #     mandelbrot.load_mandelbrot()
 
-    mandelbrot.plot_mandelbrot(save_figure=False, save_true_size=False)
+    # mandelbrot.plot_mandelbrot(save_figure=False, save_true_size=False)
 
     ###############################################################################################
     ## integrate mandelbrot set
     ###############################################################################################
-    n_samples = 1000000
+    n_samples = 100000
     n_iterations = 256
     time_start = time.time()
-    mandelbrot_area = integrate_mandelbrot(dims, n_samples, n_iterations, sampling="PRS")
+    mandelbrot_area = integrate_mandelbrot(dims, n_samples, n_iterations, sampling="OS", antithetic=antithetic)
     print("Time to calculate integral: {:.2f} s".format(time.time() - time_start))
     print("The integral of the mandelbrot set is {:.6f}".format(mandelbrot_area))
 
