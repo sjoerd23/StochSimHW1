@@ -166,8 +166,22 @@ def latin_hypercube_sampling(dims, n_samples, antithetic):
     return x_rands, y_rands
 
 def orthogonal_sampling(dims, n_samples):
+    """Pure random sampling (PRS)
+
+    Args:
+        dims : list [x1, x2, y1, y2]
+            dimension of the search space
+        n_samples : int
+            number of random numbers to throw
+
+    Returns:
+        x_rands : list
+            list of randomly sampled x values using PRS
+        x_rands : list
+            list of randomly sampled y values using PRS
+    """
     raise NotImplementedError
-    return
+    return x_rands, y_rands
 
 def pure_random_sampling(dims, n_samples, antithetic):
     """Pure random sampling (PRS)
@@ -224,8 +238,8 @@ def integrate_mandelbrot(dims, n_samples, n_iterations, sampling="PRS", antithet
         n_samples : int
             number of points to throw and evaluate
         n_iterations : int
-            maximum number of iterations per candidate number c
-        sampling : string ("PRS" or "LHS", default: "PRS")
+            number of iterations per candidate number c
+        sampling : string ("PRS", "LHS" or "OS", default: "PRS")
             sampling technique to use for generating random numbers
         antithetic : boolean
             use antithetic variate
@@ -277,6 +291,25 @@ def point_in_mandelbrot(c, n_iterations):
         # point is inside mandelbrot set
         return True
 
+def convergence_mandelbrot(dims, n_samples, max_n_iterationsantithetic):
+    """Calculate the convergence rate of the integral of the mandelbrot set depending on
+    the number of iterations for the evaluations of points in the mandelbrot set
+
+    Args:
+        dims : list [x1, x2, y1, y2]
+            dimension of the search space
+        n_samples : int
+            number of points to throw and evaluate
+        max_n_iterations : int
+            maximum number of iterations per candidate number c
+        sampling : string ("PRS", "LHS" or "OS", default: "PRS")
+            sampling technique to use for generating random numbers
+        antithetic : boolean
+            use antithetic variate
+    """
+
+    return
+
 def main():
 
     np.random.seed()
@@ -309,8 +342,9 @@ def main():
     n_samples = 1000000
     n_iterations = 256
     time_start = time.time()
-    print(integrate_mandelbrot(dims, n_samples, n_iterations, sampling="PRS"))
+    mandelbrot_area = integrate_mandelbrot(dims, n_samples, n_iterations, sampling="PRS")
     print("Time to calculate integral: {:.2f} s".format(time.time() - time_start))
+    print("The integral of the mandelbrot set is {:.6f}".format(mandelbrot_area))
 
     # show all plots
     plt.show()
