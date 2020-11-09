@@ -190,14 +190,12 @@ def orthogonal_sampling(dims, n_samples):
     xscale = (dims[1] - dims[0]) / n_samples
     yscale = (dims[3] - dims[2]) / n_samples
 
-
     m = 0
     for i in range(major):
         for j in range(major):
             xlist[i][j] = m
             ylist[i][j] = m
             m += 1
-
 
     x_rands = []
     y_rands = []
@@ -262,7 +260,6 @@ def plot_layout():
 
     return fig, ax
 
-##### NEWLY USED
 def integrate_mandelbrot(dims, n_samples, n_iterations, sampling="PRS", antithetic=True):
     """Integrate the mandelbrot set using Monte Carlo method
 
@@ -325,7 +322,7 @@ def point_in_mandelbrot(c, n_iterations):
         # point is inside mandelbrot set
         return True
 
-def convergence_mandelbrot(dims, n_samples, max_n_iterationsantithetic):
+def convergence_mandelbrot(dims, n_samples, max_n_iterations, sampling, antithetic):
     """Calculate the convergence rate of the integral of the mandelbrot set depending on
     the number of iterations for the evaluations of points in the mandelbrot set
 
@@ -341,6 +338,23 @@ def convergence_mandelbrot(dims, n_samples, max_n_iterationsantithetic):
         antithetic : boolean
             use antithetic variate
     """
+    offset = 0
+    areas = np.zeros(max_n_iterations - offset)
+    iters = np.zeros(max_n_iterations - offset)
+    for i in tqdm.tqdm(range(offset, max_n_iterations)):
+        areas[i-offset] = integrate_mandelbrot(dims, n_samples, i+1, sampling="PRS")
+        iters[i-offset] = i + 1
+
+    # calculate A_js - A_is
+    area_diffs = [abs(area - areas[-1]) for area in areas]
+
+    # plot convergence rate of integral value
+    fig, ax = plot_layout()
+    plt.title("Absolute difference in area over number of iterations")
+    plt.plot(iters, area_diffs)
+    plt.xlabel("Iterations")
+    plt.ylabel("Differences in area")
+    # plt.savefig("results/mandelbrot_diffs_iter_{}_{}.png".format(n_samples, max_n_iterations), dpi=1000)
 
     return
 
@@ -373,12 +387,25 @@ def main():
     ###############################################################################################
     ## integrate mandelbrot set
     ###############################################################################################
-    n_samples = 100000
+    n_samples = 1000**2
     n_iterations = 256
+
+    # perform integration for all sampling techniques
+    samplings = ["PRS", "LHS", "OS"]
+    for sampling in samplings:
+        time_start = time.time()
+        mandelbrot_area = integrate_mandelbrot(dims, n_samples, n_iterations, sampling=sampling, antithetic=antithetic)
+        print("Time to calculate integral with {}: {:.2f} s".format(sampling, time.time() - time_start))
+        print("The integral of the mandelbrot set with {} is {:.6f}\n".format(sampling, mandelbrot_area))
+
+    ###############################################################################################
+    ## investigate the convergence rate over n_iterations with fixed n_samples
+    ###############################################################################################
+    n_samples = 500**2
+    max_n_iterations = 25
     time_start = time.time()
-    mandelbrot_area = integrate_mandelbrot(dims, n_samples, n_iterations, sampling="OS", antithetic=antithetic)
-    print("Time to calculate integral: {:.2f} s".format(time.time() - time_start))
-    print("The integral of the mandelbrot set is {:.6f}".format(mandelbrot_area))
+    convergence_mandelbrot(dims, n_samples, max_n_iterations, sampling="PRS", antithetic=antithetic)
+    print("Time to calculate convergence rate: {:.2f} s".format(time.time() - time_start))
 
     # show all plots
     plt.show()
