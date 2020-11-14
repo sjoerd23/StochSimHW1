@@ -4,7 +4,6 @@ import time
 import tqdm
 
 
-
 class Element:
     """
     A class used to represent the number of iterations and current
@@ -92,10 +91,16 @@ class Mandelbrot:
         plt.title("Mandelbrot set")
         plt.imshow(mandelbrot_set, extent=self.dims)
         if save_figure:
-            plt.savefig("results/mandelbrot_{}_{}.png".format(self.grid_size, self.mandel_max_iter), dpi=1000)
+            plt.savefig(
+                "results/mandelbrot_{}_{}.png".format(self.grid_size, self.mandel_max_iter),
+                dpi=1000
+            )
         if save_true_size:
-            plt.imsave("results/mandelbrot_{}_{}_true_size.png".format(self.grid_size, self.mandel_max_iter), \
-                arr=mandelbrot_set, format='png')
+            plt.imsave(
+                "results/mandelbrot_{}_{}_true_size.png"
+                .format(self.grid_size, self.mandel_max_iter),
+                arr=mandelbrot_set, format='png'
+            )
 
         return
 
@@ -166,6 +171,7 @@ def latin_hypercube_sampling(dims, n_samples, antithetic=False):
 
     return x_rands, y_rands
 
+
 def orthogonal_sampling(dims, n_samples):
     """Orthogonal Sampling (OS)
 
@@ -216,6 +222,7 @@ def orthogonal_sampling(dims, n_samples):
 
     return x_rands, y_rands
 
+
 def pure_random_sampling(dims, n_samples, antithetic=False):
     """Pure random sampling (PRS)
 
@@ -254,12 +261,14 @@ def pure_random_sampling(dims, n_samples, antithetic=False):
 
     return x_rands, y_rands
 
+
 def plot_layout():
     """Standard plot layout for figures """
     fig = plt.figure(facecolor='w')
     ax = fig.add_subplot(111, facecolor='#e8e8e8', axisbelow=True)
 
     return fig, ax
+
 
 def integrate_mandelbrot(dims, n_samples, n_iterations, sampling="PRS", antithetic=True):
     """Integrate the mandelbrot set using Monte Carlo method
@@ -309,6 +318,7 @@ def integrate_mandelbrot(dims, n_samples, n_iterations, sampling="PRS", antithet
     # return area of mandelbrot set
     return hit / (miss + hit) * (area)
 
+
 def point_in_mandelbrot(c, n_iterations):
     z = 0
     for j in range(n_iterations):
@@ -323,7 +333,8 @@ def point_in_mandelbrot(c, n_iterations):
         # point is inside mandelbrot set
         return True
 
-def convergence_mandelbrot(dims, n_samples_all, max_n_iterations, sampling, antithetic, runs = 1):
+
+def convergence_mandelbrot(dims, n_samples_all, max_n_iterations, sampling, antithetic, runs=1):
     """Calculate the convergence rate of the integral of the mandelbrot set depending on
     the number of iterations for the evaluations of points in the mandelbrot set
 
@@ -347,7 +358,6 @@ def convergence_mandelbrot(dims, n_samples_all, max_n_iterations, sampling, anti
 
     offset = 0
 
-
     for n_samples in n_samples_all:
         area_diffs_all = np.zeros((runs, max_n_iterations - offset))
         for j in range(runs):
@@ -361,20 +371,27 @@ def convergence_mandelbrot(dims, n_samples_all, max_n_iterations, sampling, anti
             area_diffs = [abs(area - areas[-1]) for area in areas]
             area_diffs_all[j] = area_diffs
 
-        mean_area_diff = np.array([np.mean(area_diffs_all[:,x]) for x in range(max_n_iterations - offset)])
-        std_area_diff = np.array([np.std(area_diffs_all[:,x], ddof=1) for x in range(max_n_iterations - offset)])
+        mean_area_diff = np.array([np.mean(area_diffs_all[:, x])
+                                   for x in range(max_n_iterations - offset)])
+        std_area_diff = np.array([np.std(area_diffs_all[:, x], ddof=1)
+                                  for x in range(max_n_iterations - offset)])
 
         # plot convergence rate of integral value
-        plt.errorbar(iters, mean_area_diff, yerr = std_area_diff, label='samples drawn; {}'.format(n_samples))
+        plt.errorbar(
+            iters, mean_area_diff, yerr=std_area_diff, label='samples drawn; {}'.format(n_samples)
+        )
 
     plt.legend()
     plt.xlabel("Iterations [-]")
     plt.ylabel("Differences in area [-]")
-    # plt.savefig("results/mandelbrot_diffs_iter_{}_{}.png".format(n_samples, max_n_iterations), dpi=1000)
+    # plt.savefig(
+    #     "results/mandelbrot_diffs_iter_{}_{}.png".format(n_samples, max_n_iterations), dpi=1000
+    # )
 
     return mean_area_diff, std_area_diff
 
-def conf_int_mandelbrot(dims, n_samples_all, n_iterations, sampling_all, antithetic, runs = 1):
+
+def conf_int_mandelbrot(dims, n_samples_all, n_iterations, sampling_all, antithetic, runs=1):
     """Calculate the confidence interval for the integral of the mandelbrot set depending on
     the number of the samples drawn
 
@@ -407,12 +424,12 @@ def conf_int_mandelbrot(dims, n_samples_all, n_iterations, sampling_all, antithe
                 areas[i][j] = integrate_mandelbrot(dims, n_samples, n_iterations, sampling=sampling)
 
         mean_area[k] = [np.mean(areas[x]) for x in range(len(n_samples_all))]
-        conf_area[k] = [(np.std(areas[x], ddof=1) * 1.96) / np.sqrt(runs) for x in range(len(n_samples_all))]
+        conf_area[k] = [(np.std(areas[x], ddof=1) * 1.96) / np.sqrt(runs)
+                        for x in range(len(n_samples_all))]
 
         # plot convergence rate of integral value
         ax.plot(n_samples_all, conf_area[k], label='Sampling: {}'.format(sampling))
         ax2.plot(n_samples_all, mean_area[k], label='Sampling: {}'.format(sampling))
-
 
     ax.set_xlabel("Samples drawn [-]")
     ax.set_ylabel("Confidence interval [-]")
@@ -420,9 +437,12 @@ def conf_int_mandelbrot(dims, n_samples_all, n_iterations, sampling_all, antithe
     ax2.set_ylabel("Area [-]")
     ax.legend()
     ax2.legend()
-    # plt.savefig("results/mandelbrot_diffs_iter_{}_{}.png".format(n_samples, max_n_iterations), dpi=1000)
+    # plt.savefig(
+    #     "results/mandelbrot_diffs_iter_{}_{}.png".format(n_samples, max_n_iterations), dpi=1000
+    # )
 
     return mean_area, conf_area
+
 
 def main():
 
@@ -460,9 +480,17 @@ def main():
     # samplings = ["PRS", "LHS", "OS"]
     # for sampling in samplings:
     #     time_start = time.time()
-    #     mandelbrot_area = integrate_mandelbrot(dims, n_samples, n_iterations, sampling=sampling, antithetic=antithetic)
-    #     print("Time to calculate integral with {}: {:.2f} s".format(sampling, time.time() - time_start))
-    #     print("The integral of the mandelbrot set with {} is {:.6f}\n".format(sampling, mandelbrot_area))
+    #     mandelbrot_area = integrate_mandelbrot(
+    #         dims, n_samples, n_iterations, sampling=sampling, antithetic=antithetic
+    #     )
+    #     print(
+    #         "Time to calculate integral with {}: {:.2f} s"
+    #         .format(sampling, time.time() - time_start)
+    #     )
+    #     print(
+    #         "The integral of the mandelbrot set with {} is {:.6f}\n"
+    #         .format(sampling, mandelbrot_area)
+    #     )
 
     ###############################################################################################
     ## investigate confidence interval for different values of n_samples
@@ -473,45 +501,54 @@ def main():
     # n_samples = [200**2]
     # max_n_iterations = 256
     # sampling = ["PRS"]
-    # m, c = conf_int_mandelbrot(dims, n_samples, max_n_iterations, sampling_all=sampling, antithetic=antithetic, runs = 5)
+    # m, c = conf_int_mandelbrot(
+    #     dims, n_samples, max_n_iterations, sampling_all=sampling, antithetic=antithetic, runs = 5
+    # )
     # for i in range(len(m)):
-    #     print("The area of the mandelbrot set is estimated at {:.5f} +- {:.5f} for {} sampling".format(m[i][-1], c[i][-1], sampling[i]))
-
+    #     print(
+    #         "The area of the mandelbrot set is estimated at {:.5f} +- {:.5f} for {} sampling"
+    #         .format(m[i][-1], c[i][-1], sampling[i])
+    #     )
 
     ###############################################################################################
     ## investigate confidence interval for different values of n_samples for different sampling techniques
     ###############################################################################################
 
-
     # Confidence interval for the different types of sampling
     # n_samples = [i ** 2 for i in range(1000, 2200, 250)]
-    # n_samples = [200**2, 250**2]
-    # max_n_iterations = 1024
-    # sampling = ["PRS"]
-    # m, c = conf_int_mandelbrot(dims, n_samples, max_n_iterations, sampling_all=sampling, antithetic=antithetic, runs = 10)
-    # for i in range(len(m)):
-    #     print("The area of the mandelbrot set is estimated at {:.5f} +- {:.5f} for {} sampling".format(m[i][-1], c[i][-1], sampling[i]))
-
-
+    n_samples = [512**2, 1024**2, 2048**2, 4069**2]
+    max_n_iterations = 2048
+    sampling = ["PRS"]
+    m, c = conf_int_mandelbrot(
+        dims, n_samples, max_n_iterations, sampling_all=sampling, antithetic=antithetic, runs=20
+    )
+    for i in range(len(m)):
+        print(
+            "The area of the mandelbrot set is estimated at {:.5f} +- {:.5f} for {} sampling"
+            .format(m[i][-1], c[i][-1], sampling[i])
+        )
 
     ###############################################################################################
     ## investigate the convergence rate over n_iterations with fixed n_samples
     ###############################################################################################
     # time_start = time.time()
     # n_samples = [100**2]
-    # mean, std = convergence_mandelbrot(dims, n_samples, max_n_iterations, sampling="PRS", antithetic=antithetic, runs = 3)
+    # mean, std = convergence_mandelbrot(
+    #     dims, n_samples, max_n_iterations, sampling="PRS", antithetic=antithetic, runs = 3
+    # )
     # print("Time to calculate convergence rate: {:.2f} s".format(time.time() - time_start))
 
     # look at the samplings
-    fig, axes = plt.subplots(nrows=2, ncols=2)
-    axes = axes.flatten()
-    n_samples = 5**2
-    samplings = [pure_random_sampling, latin_hypercube_sampling, orthogonal_sampling]
-    for i, sampling in enumerate(samplings):
-        x_rands, y_rands = sampling(dims, n_samples)
+    # fig, axes = plt.subplots(nrows=2, ncols=2)
+    # axes = axes.flatten()
+    # n_samples = 5**2
+    # samplings = [pure_random_sampling, latin_hypercube_sampling, orthogonal_sampling]
+    # for i, sampling in enumerate(samplings):
+    #     x_rands, y_rands = sampling(dims, n_samples)
+    #
+    #     axes[i].scatter(x_rands, y_rands)
+    #     axes[i].set_title("{}".format(sampling.__name__))
 
-        axes[i].scatter(x_rands, y_rands)
-        axes[i].set_title("{}".format(sampling.__name__))
     # show all plots
     plt.show()
 
