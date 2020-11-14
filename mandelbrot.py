@@ -408,7 +408,7 @@ def conf_int_mandelbrot(dims, n_samples_all, n_iterations, sampling_all, antithe
             
         mean_area[k] = [np.mean(areas[x]) for x in range(len(n_samples_all))]
         conf_area[k] = [(np.std(areas[x], ddof=1) * 1.96) / np.sqrt(runs) for x in range(len(n_samples_all))]
-        
+
         # plot convergence rate of integral value
         ax.plot(n_samples_all, conf_area[k], label='Sampling: {}'.format(sampling))
         ax2.plot(n_samples_all, mean_area[k], label='Sampling: {}'.format(sampling))
@@ -468,14 +468,14 @@ def main():
     ## investigate confidence interval for different values of n_samples
     ###############################################################################################
     
-    n_samples = [i ** 2 for i in range(200, 600, 20)]
-    n_samples = [200**2, 250**2, 300**2, 350**2,400**2]
-    n_samples = [200**2]
-    max_n_iterations = 256
-    sampling = ["PRS"]
-    m, c = conf_int_mandelbrot(dims, n_samples, max_n_iterations, sampling_all=sampling, antithetic=antithetic, runs = 5)
-    for i in range(len(m)):
-        print("The area of the mandelbrot set is estimated at {:.5f} +- {:.5f} for {} sampling".format(m[i][-1], c[i][-1], sampling[i]))
+    # n_samples = [i ** 2 for i in range(200, 600, 20)]
+    # n_samples = [200**2, 250**2, 300**2, 350**2,400**2]
+    # n_samples = [200**2]
+    # max_n_iterations = 256
+    # sampling = ["PRS"]
+    # m, c = conf_int_mandelbrot(dims, n_samples, max_n_iterations, sampling_all=sampling, antithetic=antithetic, runs = 5)
+    # for i in range(len(m)):
+    #     print("The area of the mandelbrot set is estimated at {:.5f} +- {:.5f} for {} sampling".format(m[i][-1], c[i][-1], sampling[i]))
     
     
     ###############################################################################################
@@ -484,12 +484,13 @@ def main():
     
 
     # Confidence interval for the different types of sampling
-    # n_samples = [i ** 2 for i in range(200, 600, 20)]
-    # n_samples = [200**2, 250**2]
-    # max_n_iterations = 256
-    # m, c = conf_int_mandelbrot(dims, n_samples, max_n_iterations, sampling_all=["PRS", "LHS", "OS"], antithetic=antithetic, runs = 30)
-    # for i in range(len(m)):
-    #     print("The area of the mandelbrot set is estimated at {:.5f} +- {:.5f} for {} sampling".format(m[i][-1], c[i][-1], sampling[i]))
+    n_samples = [i ** 2 for i in range(200, 600, 20)]
+    n_samples = [200**2, 250**2]
+    max_n_iterations = 256
+    sampling = ["PRS", "LHS", "OS"]
+    m, c = conf_int_mandelbrot(dims, n_samples, max_n_iterations, sampling_all=sampling, antithetic=antithetic, runs = 5)
+    for i in range(len(m)):
+        print("The area of the mandelbrot set is estimated at {:.5f} +- {:.5f} for {} sampling".format(m[i][-1], c[i][-1], sampling[i]))
     
 
 
