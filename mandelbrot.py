@@ -428,8 +428,16 @@ def conf_int_mandelbrot(dims, n_samples_all, n_iterations, sampling_all, antithe
                         for x in range(len(n_samples_all))]
 
         # plot convergence rate of integral value
-        ax.plot(n_samples_all, conf_area[k], label='Sampling: {}'.format(sampling))
-        ax2.plot(n_samples_all, mean_area[k], label='Sampling: {}'.format(sampling))
+        ax.scatter(n_samples_all, conf_area[k], label='Sampling: {}'.format(sampling))
+        ax2.scatter(n_samples_all, mean_area[k], label='Sampling: {}'.format(sampling))
+
+    ###### remove in final version
+    ## Give appropriate filename yourself
+    custom_fname = "sim_0"
+    fname = "results/" + custom_fname
+    np.savetxt(fname+"areas.txt", areas)
+    np.savetxt(fname+"mean_area.txt", mean_area)
+    np.savetxt(fname+"conf_area.txt", conf_area)
 
     ax.set_xlabel("Samples drawn [-]")
     ax.set_ylabel("Confidence interval [-]")
@@ -515,12 +523,14 @@ def main():
     ###############################################################################################
 
     # Confidence interval for the different types of sampling
-    # n_samples = [i ** 2 for i in range(1000, 2200, 250)]
+    n_samples = [i ** 2 for i in range(1000, 2200, 250)]
     n_samples = [512**2, 1024**2, 2048**2, 4069**2]
-    max_n_iterations = 2048
+    n_samples = [1024**2]
+    max_n_iterations = 4096*2
+
     sampling = ["PRS"]
     m, c = conf_int_mandelbrot(
-        dims, n_samples, max_n_iterations, sampling_all=sampling, antithetic=antithetic, runs=20
+        dims, n_samples, max_n_iterations, sampling_all=sampling, antithetic=antithetic, runs=5
     )
     for i in range(len(m)):
         print(
@@ -548,6 +558,52 @@ def main():
     #
     #     axes[i].scatter(x_rands, y_rands)
     #     axes[i].set_title("{}".format(sampling.__name__))
+
+####################################################################################
+    # Load simulation (hacky code, remove before handing in)
+####################################################################################
+
+    # set this by hand
+    sampling_all = ["PRS"]
+    n_samples_all = [50**2, 60**2]
+    custom_fname = "sim_0"
+
+    fname = "results/" + custom_fname
+    areas = np.array(np.loadtxt(fname+"areas.txt"))
+    mean_area = np.array(np.loadtxt(fname+"mean_area.txt"))
+    conf_area = np.array(np.loadtxt(fname+"conf_area.txt"))
+    print(areas)
+    print(conf_area, mean_area)
+    if len(n_samples_all) == 1 and len(sampling_all) == 1:
+        mean_area = np.array([np.loadtxt(fname+"mean_area.txt")]).flatten()
+        conf_area = np.array([np.loadtxt(fname+"conf_area.txt")]).flatten()
+
+    fig, ax = plot_layout()
+    ax.set_title("Confidence interval for the integral of the area")
+    fig2, ax2 = plot_layout()
+    ax2.set_title("Integral value")
+
+    for k, sampling in enumerate(sampling_all):
+
+        if len(sampling_all) == 1 and len(n_samples_all) > 1:
+            conf_area_k = conf_area
+            mean_area_k = mean_area
+        else:
+            conf_area_k = conf_area[k]
+            mean_area_k = mean_area[k]
+        # plot convergence rate of integral value
+        ax.scatter(n_samples_all, conf_area_k, label='Sampling: {}'.format(sampling))
+        ax2.scatter(n_samples_all, mean_area_k, label='Sampling: {}'.format(sampling))
+
+    ###### remove in final version
+    ## Give appropriate filename yourself
+
+    ax.set_xlabel("Samples drawn [-]")
+    ax.set_ylabel("Confidence interval [-]")
+    ax2.set_xlabel("Samples drawn [-]")
+    ax2.set_ylabel("Area [-]")
+    ax.legend()
+    ax2.legend()
 
     # show all plots
     plt.show()
