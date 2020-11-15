@@ -524,31 +524,29 @@ def main():
     ###############################################################################################
 
     # Confidence interval for the different types of sampling
-    # n_samples = [i ** 2 for i in range(1000, 2200, 250)]
-    # n_samples = [512**2, 1024**2, 2048**2, 4069**2]
-    # n_samples = [1250**2]
-    # max_n_iterations = 4096*2
-    #
-    # sampling = ["PRS"]
-    # m, c = conf_int_mandelbrot(
-    #     dims, n_samples, max_n_iterations, sampling_all=sampling, antithetic=antithetic, runs=5
-    # )
-    # for i in range(len(m)):
-    #     print(
-    #         "The area of the mandelbrot set is estimated at {:.5f} +- {:.5f} for {} sampling"
-    #         .format(m[i][-1], c[i][-1], sampling[i])
-    #     )
+    n_samples = [2048**2]
+    max_n_iterations = 4096
+
+    sampling = ["OS"]
+    m, c = conf_int_mandelbrot(
+        dims, n_samples, max_n_iterations, sampling_all=sampling, antithetic=False, runs=30
+    )
+    for i in range(len(m)):
+        print(
+            "The area of the mandelbrot set is estimated at {:.5f} +- {:.5f} for {} sampling"
+            .format(m[i][-1], c[i][-1], sampling[i])
+        )
 
     ###############################################################################################
     ## investigate the convergence rate over n_iterations with fixed n_samples
     ###############################################################################################
-    time_start = time.time()
-    n_samples = [100**2, 200**2, 300**2]
-    max_n_iterations = 25
-    mean, std = convergence_mandelbrot(
-        dims, n_samples, max_n_iterations, sampling="PRS", antithetic=antithetic, runs = 3
-    )
-    print("Time to calculate convergence rate: {:.2f} s".format(time.time() - time_start))
+    # time_start = time.time()
+    # n_samples = [100**2, 200**2, 300**2]
+    # max_n_iterations = 25
+    # mean, std = convergence_mandelbrot(
+    #     dims, n_samples, max_n_iterations, sampling="PRS", antithetic=antithetic, runs = 3
+    # )
+    # print("Time to calculate convergence rate: {:.2f} s".format(time.time() - time_start))
 
     # look at the samplings
     # fig, axes = plt.subplots(nrows=2, ncols=2)
