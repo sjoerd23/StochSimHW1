@@ -240,9 +240,6 @@ def pure_random_sampling(dims, n_samples, antithetic=False):
         x_rands : list
             list of randomly sampled y values using PRS
     """
-
-    antithetic = False
-
     x_rands = []
     y_rands = []
 
@@ -426,7 +423,7 @@ def conf_int_mandelbrot(dims, n_samples_all, n_iterations, sampling_all, antithe
     for k, sampling in enumerate(sampling_all):
         for i, n_samples in enumerate(n_samples_all):
             for j in range(runs):
-                areas[i][j] = integrate_mandelbrot(dims, n_samples, n_iterations, sampling=sampling, antithetic)
+                areas[i][j] = integrate_mandelbrot(dims, n_samples, n_iterations, sampling=sampling, antithetic=antithetic)
 
         mean_area[k] = [np.mean(areas[x]) for x in range(len(n_samples_all))]
         conf_area[k] = [(np.std(areas[x], ddof=1) * 1.96) / np.sqrt(runs)
