@@ -241,6 +241,8 @@ def pure_random_sampling(dims, n_samples, antithetic=False):
             list of randomly sampled y values using PRS
     """
 
+    antithetic = False
+
     x_rands = []
     y_rands = []
 
@@ -305,7 +307,7 @@ def integrate_mandelbrot(dims, n_samples, n_iterations, sampling="PRS", antithet
 
     # for the amount of n_samples, throw a sample and evaluate if it falls in the mandelbrot in
     # n_iterations of the mandelbrot equation
-    for i in tqdm.tqdm(range(len(x_rands))):
+    for i in range(len(x_rands)):
         x_rand = x_rands[i]
         y_rand = y_rands[i]
         if point_in_mandelbrot(complex(x_rand, y_rand), n_iterations):
@@ -354,11 +356,11 @@ def convergence_mandelbrot(dims, n_samples_all, max_n_iterations, sampling, anti
     """
 
     fig, ax = plot_layout()
-    plt.title("Absolute difference in area over number of iterations")
+    # plt.title("Absolute difference in area over number of iterations")
 
     offset = 0
 
-    for n_samples in n_samples_all:
+    for n_samples in tqdm.tqdm(n_samples_all):
         area_diffs_all = np.zeros((runs, max_n_iterations - offset))
         for j in range(runs):
             areas = np.zeros(max_n_iterations - offset)
@@ -379,8 +381,10 @@ def convergence_mandelbrot(dims, n_samples_all, max_n_iterations, sampling, anti
         # plot convergence rate of integral value, to plot with line, change fmt to fmt=""
         plt.errorbar(
             iters, mean_area_diff, marker=".", fmt=".", solid_capstyle="projecting", capsize=5,
-            yerr=std_area_diff, label="samples drawn; {}".format(n_samples)
+            yerr=std_area_diff, label="{} samples".format(n_samples)
         )
+
+        np.savetxt("results/conv_iter_{}_{}.txt".format(n_samples, max_n_iterations), area_diffs_all)
 
     plt.legend()
     plt.xlabel("Iterations [-]")
@@ -422,7 +426,7 @@ def conf_int_mandelbrot(dims, n_samples_all, n_iterations, sampling_all, antithe
     for k, sampling in enumerate(sampling_all):
         for i, n_samples in enumerate(n_samples_all):
             for j in range(runs):
-                areas[i][j] = integrate_mandelbrot(dims, n_samples, n_iterations, sampling=sampling)
+                areas[i][j] = integrate_mandelbrot(dims, n_samples, n_iterations, sampling=sampling, antithetic)
 
         mean_area[k] = [np.mean(areas[x]) for x in range(len(n_samples_all))]
         conf_area[k] = [(np.std(areas[x], ddof=1) * 1.96) / np.sqrt(runs)
@@ -434,7 +438,7 @@ def conf_int_mandelbrot(dims, n_samples_all, n_iterations, sampling_all, antithe
 
     ###### remove in final version
     ## Give appropriate filename yourself
-    custom_fname = "sim_0"
+    custom_fname = "sim_1"
     fname = "results/" + custom_fname
     np.savetxt(fname+"areas.txt", areas)
     np.savetxt(fname+"mean_area.txt", mean_area)
@@ -527,13 +531,13 @@ def main():
     n_samples = [2048**2]
     max_n_iterations = 4096
 
-    sampling = ["OS"]
+    sampling = ["PRS"]
     m, c = conf_int_mandelbrot(
-        dims, n_samples, max_n_iterations, sampling_all=sampling, antithetic=False, runs=30
+        dims, n_samples, max_n_iterations, sampling_all=sampling, antithetic=False, runs=15
     )
     for i in range(len(m)):
         print(
-            "The area of the mandelbrot set is estimated at {:.5f} +- {:.5f} for {} sampling"
+            "The area of the mandelbrot set is estimated at {:.15f} +- {:.15f} for {} sampling"
             .format(m[i][-1], c[i][-1], sampling[i])
         )
 
@@ -541,10 +545,10 @@ def main():
     ## investigate the convergence rate over n_iterations with fixed n_samples
     ###############################################################################################
     # time_start = time.time()
-    # n_samples = [100**2, 200**2, 300**2]
-    # max_n_iterations = 25
+    # n_samples = [128**2, 256**2, 512**2]
+    # max_n_iterations = 256
     # mean, std = convergence_mandelbrot(
-    #     dims, n_samples, max_n_iterations, sampling="PRS", antithetic=antithetic, runs = 3
+    #     dims, n_samples, max_n_iterations, sampling="PRS", antithetic=False, runs = 10
     # )
     # print("Time to calculate convergence rate: {:.2f} s".format(time.time() - time_start))
 
