@@ -304,7 +304,7 @@ def integrate_mandelbrot(dims, n_samples, n_iterations, sampling="PRS", antithet
 
     # for the amount of n_samples, throw a sample and evaluate if it falls in the mandelbrot in
     # n_iterations of the mandelbrot equation
-    for i in range(len(x_rands)):
+    for i in tqdm.tqdm(range(len(x_rands))):
         x_rand = x_rands[i]
         y_rand = y_rands[i]
         if point_in_mandelbrot(complex(x_rand, y_rand), n_iterations):
