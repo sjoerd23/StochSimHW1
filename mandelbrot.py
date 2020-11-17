@@ -5,13 +5,7 @@ import tqdm
 
 
 class Mandelbrot:
-    """
-    A class used to represent and calculate Mandelbrot sets
-
-    ...
-
-    Attributes
-    ----------
+    """A class used to represent and calculate Mandelbrot sets
     """
     def __init__(self, dims, grid_size, mandel_max_iter):
         """
