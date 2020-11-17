@@ -74,7 +74,8 @@ class Mandelbrot:
         fig, ax = plot_layout()
         plt.title("Mandelbrot set")
         plt.imshow(mandelbrot_set, extent=self.dims)
-
+        plt.xlabel("x [-]")
+        plt.ylabel("y [-]")
         if save_figure:
             plt.savefig(
                 "results/mandelbrot_{}_{}.png".format(self.grid_size, self.mandel_max_iter),
@@ -337,7 +338,7 @@ def convergence_mandelbrot(dims, n_samples_all, max_n_iterations, sampling, anti
     """
 
     fig, ax = plot_layout()
-    # plt.title("Absolute difference in area over number of iterations")
+    plt.title("Absolute difference in area over number of iterations")
 
     offset = 0
 
@@ -368,8 +369,6 @@ def convergence_mandelbrot(dims, n_samples_all, max_n_iterations, sampling, anti
             iters, mean_area_diff, marker=".", fmt=".", solid_capstyle="projecting", capsize=5,
             yerr=std_area_diff, label="{} samples".format(n_samples)
         )
-
-        np.savetxt("results/conv_iter_{}_{}.txt".format(n_samples, max_n_iterations), area_diffs_all)
 
     plt.legend()
     plt.xlabel("Iterations [-]")
@@ -409,6 +408,7 @@ def conf_int_mandelbrot(dims, n_samples_all, n_iterations, sampling_all, antithe
     fig, ax = plot_layout()
     ax.set_title("Confidence interval for the integral of the area")
     fig2, ax2 = plot_layout()
+    ax.set_title("Calculated areas of the integral")
 
     areas = np.zeros((len(n_samples_all), runs))
 
@@ -416,14 +416,13 @@ def conf_int_mandelbrot(dims, n_samples_all, n_iterations, sampling_all, antithe
     conf_area = np.zeros((len(sampling_all), len(n_samples_all)))
     for k, sampling in enumerate(sampling_all):
         for i, n_samples in enumerate(n_samples_all):
-            for j in range(runs):
+            for j in tqdm.tqdm(range(runs)):
                 areas[i][j] = integrate_mandelbrot(dims, n_samples, n_iterations, sampling=sampling, antithetic=antithetic)
 
         mean_area[k] = [np.mean(areas[x]) for x in range(len(n_samples_all))]
         conf_area[k] = [(np.std(areas[x], ddof=1) * 1.96) / np.sqrt(runs)
                         for x in range(len(n_samples_all))]
 
-        # plot convergence rate of integral value
         ax.scatter(n_samples_all, conf_area[k], label="Sampling: {}".format(sampling))
         ax2.scatter(n_samples_all, mean_area[k], label="Sampling: {}".format(sampling))
 
@@ -431,8 +430,10 @@ def conf_int_mandelbrot(dims, n_samples_all, n_iterations, sampling_all, antithe
     ax.set_ylabel("Confidence interval [-]")
     ax2.set_xlabel("Samples drawn [-]")
     ax2.set_ylabel("Area [-]")
-    ax.legend()
-    ax2.legend()
+    ax.legend(prop={"size": 12})
+    ax2.legend(prop={"size": 12})
+    ax.ticklabel_format(axis='x', style='sci', scilimits=(0,0))
+    ax2.ticklabel_format(axis='x', style='sci', scilimits=(0,0))
 
     return mean_area, conf_area
 
@@ -460,14 +461,14 @@ def main():
     else:
         mandelbrot.load_mandelbrot()
 
-    mandelbrot.plot_mandelbrot(save_figure=False, save_true_size=False)
+    mandelbrot.plot_mandelbrot(save_figure=True, save_true_size=False)
 
     # integrate mandelbrot set and confidence interval for different values of n_samples
     sampling_all = ["PRS", "LHS", "OS"]
     n_samples = [128**2, 256**2]            # list of number of samples when integrating Mandelbrot
-    max_n_iterations = 128                  # maximum of iterations when calculating integral
+    max_n_iterations = 256                  # maximum of iterations when calculating integral
     mean_area, conf_area = conf_int_mandelbrot(
-        dims, n_samples, max_n_iterations, sampling_all=sampling_all, antithetic=antithetic, runs=5
+        dims, n_samples, max_n_iterations, sampling_all=sampling_all, antithetic=antithetic, runs=30
     )
 
     # print area with confidence interval for highest amount of samples in n_samples
@@ -479,10 +480,10 @@ def main():
 
     # investigate the convergence rate over n_iterations for each sample size in n_samples
     sampling = "PRS"
-    n_samples = [128**2, 256**2]            # list of number of samples when integrating Mandelbrot
-    max_n_iterations = 128                  # maximum of iterations when calculating integral
+    n_samples = [128**2, 256**2]        # list of number of samples when integrating Mandelbrot
+    max_n_iterations = 256              # maximum of iterations when calculating integral
     convergence_mandelbrot(
-        dims, n_samples, max_n_iterations, sampling=sampling, antithetic=False, runs = 2
+        dims, n_samples, max_n_iterations, sampling=sampling, antithetic=False, runs = 10
     )
 
     # show all plots
